@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FinVault — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0f1a;
+      --surface: #111827;
+      --card: #161d2e;
+      --border: #1f2d45;
+      --accent: #00e5a0;
+      --accent2: #6c63ff;
+      --danger: #ff5c7c;
+      --warn: #ffb547;
+      --text: #e8f0fe;
+      --muted: #5a6a85;
+      --radius: 18px;
+    }
+
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      overflow-x: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 220px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 32px 20px;
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+      margin-bottom: 48px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo span { color: var(--text); }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 4px;
+      letter-spacing: 0.3px;
+    }
+    .nav-item:hover { background: var(--card); color: var(--text); }
+    .nav-item.active { background: rgba(0,229,160,0.1); color: var(--accent); border: 1px solid rgba(0,229,160,0.2); }
+
+    .nav-icon { font-size: 18px; width: 22px; text-align: center; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: 220px;
+      flex: 1;
+      padding: 40px 36px;
+      max-width: calc(100vw - 220px);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 36px;
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    .page-title span { color: var(--accent); }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .date-badge {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 30px;
+    }
+
+    .notif-btn {
+      width: 38px; height: 38px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    .notif-btn:hover { border-color: var(--accent); }
+
+    /* ── BALANCE HERO ── */
+    .balance-hero {
+      background: linear-gradient(135deg, #0f2027, #1a2a3a 60%, #0b2a1a);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px 40px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .balance-hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 260px; height: 260px;
+      background: radial-gradient(circle, rgba(0,229,160,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .balance-label {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .balance-amount {
+      font-family: 'Syne', sans-serif;
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .balance-amount sup { font-size: 22px; font-weight: 600; color: var(--accent); vertical-align: super; margin-right: 4px; }
+
+    .balance-change {
+      font-size: 12px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-number {
+      position: absolute;
+      bottom: 32px; right: 40px;
+      font-size: 15px;
+      letter-spacing: 5px;
+      color: var(--muted);
+      opacity: 0.6;
+    }
+
+    /* ── ACTION CARDS ── */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .action-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: center;
+      animation: fadeUp 0.5s ease both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-card:nth-child(1) { animation-delay: 0.05s; }
+    .action-card:nth-child(2) { animation-delay: 0.1s; }
+    .action-card:nth-child(3) { animation-delay: 0.15s; }
+    .action-card:nth-child(4) { animation-delay: 0.2s; }
+
+    .action-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 32px rgba(0,229,160,0.12);
+    }
+
+    .action-card:hover .action-icon { transform: scale(1.15); }
+
+    .action-icon {
+      font-size: 30px;
+      margin-bottom: 12px;
+      display: block;
+      transition: transform 0.2s;
+    }
+
+    .action-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .action-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .action-card.credit .action-icon { filter: drop-shadow(0 0 8px rgba(0,229,160,0.5)); }
+    .action-card.debit .action-icon  { filter: drop-shadow(0 0 8px rgba(255,92,124,0.5)); }
+    .action-card.transfer .action-icon{ filter: drop-shadow(0 0 8px rgba(108,99,255,0.5)); }
+    .action-card.balance .action-icon { filter: drop-shadow(0 0 8px rgba(255,181,71,0.5)); }
+
+    /* ── BOTTOM ROW ── */
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* ── HISTORY ── */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      animation: fadeUp 0.5s ease 0.3s both;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .panel-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .see-all {
+      font-size: 11px;
+      color: var(--accent);
+      cursor: pointer;
+      letter-spacing: 0.5px;
+    }
+
+    .tx-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .tx-item:last-child { border-bottom: none; }
+
+    .tx-icon {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .tx-icon.cr { background: rgba(0,229,160,0.1); }
+    .tx-icon.db { background: rgba(255,92,124,0.1); }
+    .tx-icon.tr { background: rgba(108,99,255,0.1); }
+
+    .tx-info { flex: 1; }
+
+    .tx-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .tx-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .tx-amount { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+    .tx-amount.cr { color: var(--accent); }
+    .tx-amount.db { color: var(--danger); }
+    .tx-amount.tr { color: var(--accent2); }
+
+    /* ── PROFILE ── */
+    .profile-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      animation: fadeUp 0.5s ease 0.35s both;
+    }
+
+    .profile-top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: #0b0f1a;
+      flex-shrink: 0;
+    }
+
+    .profile-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .profile-handle {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .profile-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .profile-row:last-child { border-bottom: none; }
+
+    .profile-key { color: var(--muted); }
+    .profile-val { color: var(--text); font-weight: 500; }
+
+    .status-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-right: 5px;
+      animation: pulse 2s infinite;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,160,0.5); }
+      50% { box-shadow: 0 0 0 5px rgba(0,229,160,0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">⬡ <span>Fin</span>Vault</div>
+
+    <nav>
+      <div class="nav-item active" onclick="setActive(this)">
+        <span class="nav-icon">⬛</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">↑</span> Credit
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">↓</span> Debit
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">⇄</span> Transfer
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">◎</span> Balance
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">⊟</span> History
+      </div>
+      <div class="nav-item" onclick="setActive(this)">
+        <span class="nav-icon">◉</span> Profile
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="nav-item">
+        <span class="nav-icon">⎋</span> Logout
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-title">Good morning, <span>Alex</span> 👋</div>
+      <div class="topbar-right">
+        <div class="date-badge">Fri, 08 May 2026</div>
+        <div class="notif-btn">🔔</div>
+      </div>
+    </div>
+
+    <!-- BALANCE HERO -->
+    <div class="balance-hero">
+      <div class="balance-label">Total Balance</div>
+      <div class="balance-amount"><sup>₹</sup>2,48,530<span style="font-size:24px;color:var(--muted)">.50</span></div>
+      <div class="balance-change">▲ +3.2% from last month</div>
+      <div class="card-number">•••• •••• •••• 4821</div>
+    </div>
+
+    <!-- ACTION CARDS -->
+    <div class="actions-grid">
+      <div class="action-card credit" onclick="flash(this)">
+        <span class="action-icon">💚</span>
+        <div class="action-label">Credit</div>
+        <div class="action-sub">Add funds to account</div>
+      </div>
+      <div class="action-card debit" onclick="flash(this)">
+        <span class="action-icon">🔴</span>
+        <div class="action-label">Debit</div>
+        <div class="action-sub">Withdraw or pay</div>
+      </div>
+      <div class="action-card transfer" onclick="flash(this)">
+        <span class="action-icon">🔵</span>
+        <div class="action-label">Transfer</div>
+        <div class="action-sub">Send to another account</div>
+      </div>
+      <div class="action-card balance" onclick="flash(this)">
+        <span class="action-icon">🟡</span>
+        <div class="action-label">Balance</div>
+        <div class="action-sub">View full breakdown</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="bottom-row">
+
+      <!-- HISTORY -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Transaction History</div>
+          <div class="see-all">See all →</div>
+        </div>
+
+        <div class="tx-item">
+          <div class="tx-icon cr">💸</div>
+          <div class="tx-info">
+            <div class="tx-name">Salary Credit</div>
+            <div class="tx-date">07 May 2026 · 09:14 AM</div>
+          </div>
+          <div class="tx-amount cr">+₹75,000</div>
+        </div>
+
+        <div class="tx-item">
+          <div class="tx-icon db">🛒</div>
+          <div class="tx-info">
+            <div class="tx-name">Amazon Purchase</div>
+            <div class="tx-date">06 May 2026 · 03:42 PM</div>
+          </div>
+          <div class="tx-amount db">−₹3,299</div>
+        </div>
+
+        <div class="tx-item">
+          <div class="tx-icon tr">🔄</div>
+          <div class="tx-info">
+            <div class="tx-name">Transfer to Priya</div>
+            <div class="tx-date">05 May 2026 · 11:00 AM</div>
+          </div>
+          <div class="tx-amount tr">⇄ ₹10,000</div>
+        </div>
+
+        <div class="tx-item">
+          <div class="tx-icon db">🍽️</div>
+          <div class="tx-info">
+            <div class="tx-name">Swiggy Order</div>
+            <div class="tx-date">04 May 2026 · 08:20 PM</div>
+          </div>
+          <div class="tx-amount db">−₹480</div>
+        </div>
+
+        <div class="tx-item">
+          <div class="tx-icon cr">📈</div>
+          <div class="tx-info">
+            <div class="tx-name">Dividend Credit</div>
+            <div class="tx-date">02 May 2026 · 10:05 AM</div>
+          </div>
+          <div class="tx-amount cr">+₹1,820</div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="profile-card">
+        <div class="panel-header">
+          <div class="panel-title">Profile</div>
+          <div class="see-all">Edit →</div>
+        </div>
+
+        <div class="profile-top">
+          <div class="avatar">AK</div>
+          <div>
+            <div class="profile-name">Alex Kumar</div>
+            <div class="profile-handle">@alexkumar · Premium User</div>
+          </div>
+        </div>
+
+        <div class="profile-row">
+          <span class="profile-key">Account No.</span>
+          <span class="profile-val">•••• 4821</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-key">Bank</span>
+          <span class="profile-val">FinVault National</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-key">IFSC</span>
+          <span class="profile-val">FINV0001234</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-key">Mobile</span>
+          <span class="profile-val">+91 98765 •••••</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-key">Status</span>
+          <span class="profile-val"><span class="status-dot"></span>Active</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-key">KYC</span>
+          <span class="profile-val" style="color:var(--accent)">✔ Verified</span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function setActive(el) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function flash(card) {
+      card.style.transform = 'scale(0.96)';
+      setTimeout(() => card.style.transform = '', 150);
+    }
+  </script>
+
+</body>
+</html>

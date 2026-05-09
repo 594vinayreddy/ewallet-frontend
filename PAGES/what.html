@@ -1,0 +1,49 @@
+<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+        
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+          Welcome Back 👋
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Username
+            </label>
+            <input
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+              placeholder="Enter your username"
+              onChange={(e) =>
+                setCreds({ ...creds, username: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+              placeholder="Enter your password"
+              onChange={(e) =>
+                setCreds({ ...creds, password: e.target.value })
+              }
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200"
+          >
+            Login
+          </button>
+        </form>
+
+        <p className="text-sm text-gray-500 text-center mt-6">
+          Don’t have an account? <span className="text-indigo-600 cursor-pointer">Sign up</span>
+        </p>
+      </div>
+    </div>

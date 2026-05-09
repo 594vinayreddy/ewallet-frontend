@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+  body { background: #f8f9fa; padding: 24px; }
+  .title { font-size: 13px; font-weight: 700; color: #333; letter-spacing: 1px; margin-bottom: 16px; }
+  .version { font-size: 10px; color: #999; float: right; margin-top: 2px; }
+  .canvas { position: relative; width: 1020px; height: 660px; background: white; border: 1px solid #ddd; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+
+  .zone {
+    position: absolute;
+    border-radius: 8px;
+    border: 1.5px dashed #aaa;
+    background: rgba(240,244,255,0.35);
+  }
+  .zone-label {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 600;
+    color: #888;
+    letter-spacing: 0.5px;
+  }
+
+  .box {
+    position: absolute;
+    border-radius: 8px;
+    border: 2px solid #333;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px 6px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.08);
+  }
+  .box-title { font-size: 11px; font-weight: 700; color: #111; }
+  .box-sub { font-size: 9px; color: #666; margin-top: 2px; }
+  .box-port { font-size: 9px; color: #777; margin-top:1px; }
+
+  .lock {
+    position: absolute;
+    width: 16px; height: 16px;
+    background: #ff8f00;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: white;
+    top: -7px; right: -7px;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .auth-badge {
+    background: #1a237e;
+    color: white;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+  }
+
+  .step-label {
+    position: absolute;
+    font-size: 8px;
+    font-weight: 700;
+    background: #fff;
+    border: 1px solid #bbb;
+    border-radius: 10px;
+    padding: 1px 6px;
+    color: #333;
+    z-index: 5;
+    white-space: nowrap;
+  }
+
+  .db {
+    position: absolute;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 9px; color: #555; font-weight: 600;
+  }
+  .db-body {
+    width: 42px; height: 26px;
+    border: 2px solid #888;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    background: #e3f2fd;
+    display:flex; align-items:center; justify-content:center;
+    font-size:8px; color:#1565c0; font-weight:700;
+  }
+  .db-top {
+    width: 42px; height: 10px;
+    border: 2px solid #888;
+    border-radius: 50%;
+    background: #bbdefb;
+  }
+
+  .legend {
+    position: absolute;
+    bottom: 12px; left: 12px;
+    display: flex; gap: 14px; align-items: center;
+    background: rgba(255,255,255,0.9);
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+  }
+  .leg-item { display: flex; align-items: center; gap: 4px; font-size: 9px; color: #555; }
+  .leg-line { width: 24px; height: 2px; }
+  .leg-dash { width: 24px; border-top: 2px dashed; }
+
+  svg.arrows {
+    position: absolute; top:0; left:0;
+    width:100%; height:100%;
+    pointer-events: none; overflow: visible;
+  }
+</style>
+</head>
+<body>
+<div class="title">SOLUTION ARCHITECTURE <span class="version">v1.0 · Spring Boot 3.x</span></div>
+<div class="canvas">
+
+  <!-- Core Microservices Zone -->
+  <div class="zone" style="left:318px;top:40px;width:690px;height:560px;"></div>
+  <div class="zone-label" style="left:328px;top:50px;">Core Microservices</div>
+
+  <svg class="arrows">
+    <defs>
+      <marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#333"/></marker>
+      <marker id="ab" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#1565c0"/></marker>
+      <marker id="ao" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#e65100"/></marker>
+      <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#2e7d32"/></marker>
+      <marker id="ay" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f9a825"/></marker>
+      <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#c62828"/></marker>
+    </defs>
+
+    <!-- Client → Gateway -->
+    <line x1="88" y1="265" x2="145" y2="265" stroke="#333" stroke-width="2.5" marker-end="url(#a)"/>
+
+    <!-- Gateway → Auth (public routes only) -->
+    <line x1="215" y1="318" x2="215" y2="370" stroke="#555" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#a)"/>
+    <!-- Auth → Gateway (JWT back) -->
+    <line x1="200" y1="370" x2="200" y2="320" stroke="#f9a825" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ay)"/>
+
+    <!-- Gateway → User (after JWT check) -->
+    <line x1="290" y1="258" x2="355" y2="258" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+    <!-- Gateway → Transaction (after JWT check) -->
+    <line x1="290" y1="268" x2="548" y2="268" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+    <!-- Gateway → Wallet (after JWT check) -->
+    <line x1="290" y1="275" x2="758" y2="275" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+
+    <!-- Gateway → Eureka (register) -->
+    <line x1="248" y1="225" x2="430" y2="138" stroke="#2e7d32" stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#ag)"/>
+    <!-- Eureka → services -->
+    <line x1="450" y1="138" x2="415" y2="225" stroke="#2e7d32" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#ag)"/>
+    <line x1="468" y1="138" x2="615" y2="225" stroke="#2e7d32" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#ag)"/>
+    <line x1="492" y1="138" x2="818" y2="225" stroke="#2e7d32" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#ag)"/>
+
+    <!-- Auth → RabbitMQ: user.created -->
+    <path d="M290,405 Q420,405 500,435" stroke="#e65100" stroke-width="2" fill="none" marker-end="url(#ao)"/>
+    <!-- RabbitMQ → User: consume user.created -->
+    <path d="M502,418 Q460,370 418,300" stroke="#e65100" stroke-width="2" fill="none" stroke-dasharray="5,3" marker-end="url(#ao)"/>
+    <!-- User → RabbitMQ: wallet.init -->
+    <path d="M435,300 Q468,360 510,432" stroke="#e65100" stroke-width="2" fill="none" stroke-dasharray="5,3" marker-end="url(#ao)"/>
+    <!-- RabbitMQ → Wallet: consume wallet.init -->
+    <path d="M642,440 Q720,440 768,300" stroke="#e65100" stroke-width="2" fill="none" stroke-dasharray="5,3" marker-end="url(#ao)"/>
+
+    <!-- Wallet ↔ Transaction: Feign sync -->
+    <line x1="758" y1="260" x2="695" y2="258" stroke="#1565c0" stroke-width="2" marker-end="url(#ab)"/>
+
+    <!-- Auth → H2 Auth DB -->
+    <line x1="215" y1="452" x2="215" y2="490" stroke="#555" stroke-width="1.5" marker-end="url(#a)"/>
+    <!-- User → H2 User DB -->
+    <line x1="410" y1="302" x2="410" y2="490" stroke="#555" stroke-width="1.5" marker-end="url(#a)"/>
+    <!-- Wallet → H2 Wallet DB -->
+    <line x1="820" y1="302" x2="820" y2="490" stroke="#555" stroke-width="1.5" marker-end="url(#a)"/>
+  </svg>
+
+  <!-- Client -->
+  <div class="box" style="left:18px;top:228px;width:70px;height:74px;border-color:#333;">
+    <div style="font-size:24px;">🧑</div>
+    <div style="font-size:9px;font-weight:700;margin-top:2px;">Client<br/>Browser</div>
+  </div>
+
+  <!-- Step 1 label -->
+  <div class="step-label" style="left:88px;top:248px;">① HTTP Request</div>
+
+  <!-- API Gateway -->
+  <div class="box" style="left:145px;top:222px;width:145px;height:96px;border-color:#222;">
+    <div class="lock">🔒</div>
+    <div class="box-title">API Gateway</div>
+    <div class="box-port">Port 8080 · routing · JWT filter</div>
+    <div class="auth-badge">② JWT Validated Here</div>
+  </div>
+
+  <!-- Arrow labels around gateway -->
+  <div class="step-label" style="left:222px;top:340px;color:#555;">③ /auth/** only</div>
+  <div class="step-label" style="left:108px;top:348px;color:#f9a825;border-color:#f9a825;">④ Returns JWT</div>
+  <div class="step-label" style="left:295px;top:240px;color:#1a237e;border-color:#1a237e;">⑤ Routes only if JWT valid</div>
+
+  <!-- Auth Service -->
+  <div class="box" style="left:145px;top:370px;width:145px;height:82px;border-color:#444;">
+    <div class="lock">🔒</div>
+    <div class="box-title">Auth Service</div>
+    <div class="box-port">Port 8081 · OAuth2 + JWT</div>
+  </div>
+
+  <!-- Eureka -->
+  <div class="box" style="left:388px;top:58px;width:160px;height:70px;border-color:#2e7d32;background:#f1f8f1;">
+    <div class="box-title" style="color:#2e7d32;">Eureka Discovery</div>
+    <div class="box-port">Port 8761 · Service Registry</div>
+  </div>
+
+  <!-- User Service -->
+  <div class="box" style="left:355px;top:222px;width:135px;height:80px;border-color:#444;">
+    <div class="lock">🔒</div>
+    <div class="box-title">User Service</div>
+    <div class="box-port">Port 8082 · registration</div>
+  </div>
+
+  <!-- Transaction Service -->
+  <div class="box" style="left:548px;top:222px;width:148px;height:80px;border-color:#444;">
+    <div class="lock">🔒</div>
+    <div class="box-title">Transaction Service</div>
+    <div class="box-port">Port 8083 · transfers</div>
+  </div>
+
+  <!-- Wallet Service -->
+  <div class="box" style="left:758px;top:222px;width:145px;height:80px;border-color:#444;">
+    <div class="lock">🔒</div>
+    <div class="box-title">Wallet Service</div>
+    <div class="box-port">Port 8084 · balance · H2</div>
+  </div>
+
+  <!-- Feign label -->
+  <div class="step-label" style="left:700px;top:242px;color:#1565c0;border-color:#1565c0;">Feign Client Sync</div>
+
+  <!-- RabbitMQ -->
+  <div class="box" style="left:500px;top:415px;width:145px;height:80px;border-color:#e65100;background:#fff3e0;">
+    <div style="font-size:20px;">🐇</div>
+    <div class="box-title" style="color:#e65100;">RabbitMQ</div>
+    <div class="box-sub">Async Event Bus · port 5672</div>
+  </div>
+
+  <!-- RabbitMQ event step labels -->
+  <div class="step-label" style="left:340px;top:408px;color:#e65100;border-color:#e65100;">user.created event</div>
+  <div class="step-label" style="left:355px;top:342px;color:#e65100;border-color:#e65100;">consume & save user</div>
+  <div class="step-label" style="left:455px;top:318px;color:#e65100;border-color:#e65100;">wallet.init event</div>
+  <div class="step-label" style="left:656px;top:408px;color:#e65100;border-color:#e65100;">consume & create wallet</div>
+  <!-- Actuator -->
+  <div class="box" style="left:330px;top:576px;width:390px;height:28px;border-color:#558b2f;background:#f9fbe7;border-radius:14px;flex-direction:row;gap:6px;">
+    <span style="font-size:14px;">🌱</span>
+    <span style="font-size:9px;font-weight:600;color:#558b2f;">Spring Boot Actuator · health monitoring on all services</span>
+  </div>
+
+  <!-- Kafka badge top right -->
+  <div style="position:absolute;left:780px;top:55px;font-size:10px;font-weight:600;color:#555;display:flex;align-items:center;gap:4px;">
+    <span>🔀</span> kafka
+  </div>
+  <div style="position:absolute;left:840px;top:48px;border:1.5px dashed #e65100;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:600;color:#e65100;">RabbitMQ</div>
+
+  <!-- DBs -->
+  <div class="db" style="left:195px;top:490px;">
+    <div class="db-top"></div>
+    <div class="db-body">H2</div>
+    <div style="margin-top:3px;">Auth DB</div>
+  </div>
+  <div class="db" style="left:390px;top:490px;">
+    <div class="db-top"></div>
+    <div class="db-body">H2</div>
+    <div style="margin-top:3px;">User DB</div>
+  </div>
+  <div class="db" style="left:800px;top:490px;">
+    <div class="db-top"></div>
+    <div class="db-body">H2</div>
+    <div style="margin-top:3px;">Wallet DB</div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="leg-item"><div class="leg-line" style="background:#333;"></div>HTTP routing</div>
+    <div class="leg-item"><div class="leg-dash" style="border-color:#e65100;"></div>RabbitMQ async</div>
+    <div class="leg-item"><div class="leg-line" style="background:#1565c0;"></div>Feign sync</div>
+    <div class="leg-item"><div class="leg-dash" style="border-color:#2e7d32;"></div>Eureka discovery</div>
+    <div class="leg-item"><div class="leg-dash" style="border-color:#f9a825;"></div>JWT token</div>
+  </div>
+
+</div>
+</body>
+</html>
