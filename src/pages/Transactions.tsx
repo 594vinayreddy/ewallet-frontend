@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { getTransactions, transfer } from '../api/transactionApi';
+import { transfer } from '../api/transactionApi';
 import type { Transaction } from '../types';
 
 export default function Transactions() {

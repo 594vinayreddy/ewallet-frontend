@@ -1,8 +1,11 @@
 // src/api/transactionApi.ts
 import axiosClient from './axiosClient';
 
-export const getTransactions = () =>
-axiosClient.get('/transactions');
+export interface TransferRequest {
+  receiverId: string;
+  amount: number;
+  description: string;
+}
 
-export const transfer = (payload: { from: string; to: string; amount: number }) =>
-  axiosClient.post('/transactions/transfer', payload);
+export const transfer = (data: TransferRequest) =>
+  axiosClient.post('/transaction/transfer', data);

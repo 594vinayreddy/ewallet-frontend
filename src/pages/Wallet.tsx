@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getBalance, getWalletHistory } from '../api/walletApi';
+import { credit, debit, getBalance, getHistory } from '../api/walletApi';
 import type { Wallet } from '../types';
 
 export default function WalletPage() {
