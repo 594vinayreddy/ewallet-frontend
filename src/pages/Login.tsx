@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/authApi';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import walletVideo from '../assets/wallet_animation.mp4';
 
@@ -326,7 +327,7 @@ const CSS = `
 `;
 
 export default function Login() {
-  const [creds, setCreds] = useState({ username: '', password: '' });
+  const [creds, setCreds] = useState({ email: '', password: '' });
   const { setToken } = useAuthStore();
   const navigate = useNavigate();
 
@@ -487,8 +488,8 @@ export default function Login() {
                     id="email"
                     placeholder="you@example.com"
                     autoComplete="email"
-                    value={creds.username}
-                    onChange={e => setCreds(c => ({ ...c, username: e.target.value }))}
+                    value={creds.email}
+                    onChange={e => setCreds(c => ({ ...c, email: e.target.value }))}
                   />
                   <span className="input-icon">✉️</span>
                 </div>
@@ -540,7 +541,7 @@ export default function Login() {
               </div>
 
               <div className="signup-row">
-                Don't have an account? <a href="#">Create one free</a>
+                Don't have an account? <Link to="/register">Create one free</Link>
               </div>
             </form>
           </div>

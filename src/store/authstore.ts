@@ -8,13 +8,13 @@ setToken: (token: string) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  token: localStorage.getItem('jwt_token'),
+  token: localStorage.getItem('token'),
   setToken: (token) => {
-    localStorage.setItem('jwt_token', token);
+    localStorage.setItem('token', token);
     set({ token });
   },
   logout: () => {
-    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('token');
     set({ token: null });
   },
 }));
