@@ -1,69 +1,41 @@
-// src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Transactions from './pages/Transactions';
-import WalletPage from './pages/Wallet';
+
+import Login        from './pages/Login';
+import Register     from './pages/Register';
+import Dashboard    from './pages/Dashboard';
+import AddMoney     from './pages/AddMoney';
+import Pay          from './pages/Pay';
+import Transfer     from './pages/Transfer';
+import Balance      from './pages/Balance';
+import History      from './pages/History';
+import WalletPage   from './pages/Wallet';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { token } = useAuthStore();
-  return token ? children : <Navigate to="/login" />;
+  return token ? children : <Navigate to="/" replace />;
 }
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        {/* Public */}
+        <Route path="/"         element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
-        <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
+
+        {/* Protected */}
+        <Route path="/dashboard"  element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/add-money"  element={<ProtectedRoute><AddMoney /></ProtectedRoute>} />
+        <Route path="/pay"        element={<ProtectedRoute><Pay /></ProtectedRoute>} />
+        <Route path="/transfer"   element={<ProtectedRoute><Transfer /></ProtectedRoute>} />
+        <Route path="/balance"    element={<ProtectedRoute><Balance /></ProtectedRoute>} />
+        <Route path="/history"    element={<ProtectedRoute><History /></ProtectedRoute>} />
+        <Route path="/wallet"     element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
+
+        {/* Fallback — unknown routes go to dashboard if logged in */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

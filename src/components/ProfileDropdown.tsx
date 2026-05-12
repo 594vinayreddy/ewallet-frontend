@@ -12,7 +12,7 @@ export default function ProfileDropdown({ name = '', email = '', userId = '' }: 
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { clearToken } = useAuthStore();
+  const { logout } = useAuthStore();   // ← was clearToken, now logout
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -22,8 +22,8 @@ export default function ProfileDropdown({ name = '', email = '', userId = '' }: 
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const logout = () => {
-    clearToken();
+  const handleLogout = () => {
+    logout();
     navigate('/');
   };
 
@@ -32,15 +32,20 @@ export default function ProfileDropdown({ name = '', email = '', userId = '' }: 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       {/* Avatar button */}
-      <button onClick={() => setOpen(o => !o)} style={{
-        width: 40, height: 40, borderRadius: '50%',
-        background: 'linear-gradient(135deg,#4f7cff,#9b6dff)',
-        border: 'none', cursor: 'pointer',
-        color: '#fff', fontWeight: 700, fontSize: '1rem',
-        fontFamily: 'Syne, sans-serif',
-        boxShadow: '0 4px 16px rgba(79,124,255,0.4)',
-        transition: 'transform .15s',
-      }}>{initial}</button>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: 40, height: 40, borderRadius: '50%',
+          background: 'linear-gradient(135deg,#4f7cff,#9b6dff)',
+          border: 'none', cursor: 'pointer',
+          color: '#fff', fontWeight: 700, fontSize: '1rem',
+          fontFamily: 'Syne, sans-serif',
+          boxShadow: '0 4px 16px rgba(79,124,255,0.4)',
+          transition: 'transform .15s',
+        }}
+      >
+        {initial}
+      </button>
 
       {/* Dropdown */}
       {open && (
@@ -58,23 +63,32 @@ export default function ProfileDropdown({ name = '', email = '', userId = '' }: 
           <style>{`@keyframes dropIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
           {/* User info */}
-          <div style={{ padding: '14px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-            <div style={{ fontWeight: 700, fontSize: '.95rem', color: '#f5f7ff', marginBottom: 3 }}>{name || '—'}</div>
-            <div style={{ fontSize: '.78rem', color: 'rgba(245,247,255,0.45)', marginBottom: 3 }}>{email || '—'}</div>
+          <div style={{
+            padding: '14px 18px 12px',
+            borderBottom: '1px solid rgba(255,255,255,0.07)',
+          }}>
+            <div style={{ fontWeight: 700, fontSize: '.95rem', color: '#f5f7ff', marginBottom: 3 }}>
+              {name || '—'}
+            </div>
+            <div style={{ fontSize: '.78rem', color: 'rgba(245,247,255,0.45)', marginBottom: 3 }}>
+              {email || '—'}
+            </div>
             <div style={{ fontSize: '.72rem', color: 'rgba(245,247,255,0.28)', fontFamily: 'monospace' }}>
               ID: {userId || '—'}
             </div>
           </div>
 
           {/* Logout */}
-          <button onClick={logout} style={{
-            width: '100%', padding: '11px 18px',
-            background: 'none', border: 'none',
-            color: '#ff7070', fontSize: '.85rem',
-            textAlign: 'left', cursor: 'pointer',
-            fontFamily: 'DM Sans, sans-serif',
-            transition: 'background .15s',
-          }}
+          <button
+            onClick={handleLogout}
+            style={{
+              width: '100%', padding: '11px 18px',
+              background: 'none', border: 'none',
+              color: '#ff7070', fontSize: '.85rem',
+              textAlign: 'left', cursor: 'pointer',
+              fontFamily: 'DM Sans, sans-serif',
+              transition: 'background .15s',
+            }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,80,80,0.08)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'none')}
           >

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { transfer } from '../api/transactionApi';
+import { useAuthStore } from '../store/authStore';
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -18,84 +19,230 @@ const CSS = `
   .card p{color:rgba(245,247,255,0.42);font-size:.88rem;margin-bottom:32px}
   .field{margin-bottom:20px}
   .field label{display:block;font-size:.72rem;font-weight:500;letter-spacing:1.6px;text-transform:uppercase;color:rgba(245,247,255,0.55);margin-bottom:8px}
-  .field input,.field textarea{width:100%;background:rgba(255,255,255,0.065);border:1px solid rgba(255,255,255,0.085);border-radius:13px;padding:13px 16px;color:#f5f7ff;font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none;resize:none;transition:border-color .2s,background .2s,box-shadow .2s}
-  .field input::placeholder,.field textarea::placeholder{color:rgba(245,247,255,0.22)}
-  .field input:focus,.field textarea:focus{border-color:#4f7cff;background:rgba(79,124,255,0.09);box-shadow:0 0 0 3px rgba(79,124,255,0.16)}
-  .submit-btn{width:100%;padding:14px;border:none;border-radius:13px;background:linear-gradient(135deg,#4f7cff,#9b6dff);color:#fff;font-family:'Syne',sans-serif;font-size:.94rem;font-weight:700;letter-spacing:.05em;cursor:pointer;box-shadow:0 6px 30px rgba(79,124,255,0.42);transition:transform .18s,box-shadow .18s}
-  .submit-btn:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(79,124,255,0.55)}
-  .submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+  .field input,.field textarea{width:100%;background:rgba(255,255,255,0.065);border:1px solid rgba(255,255,255,0.085);border-radius:13px;padding:13px 16px;color:#f5f7ff;font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none;resize:none}
+  .submit-btn{width:100%;padding:14px;border:none;border-radius:13px;background:linear-gradient(135deg,#4f7cff,#9b6dff);color:#fff;font-family:'Syne',sans-serif;font-size:.94rem;font-weight:700;cursor:pointer}
   .success-box{padding:12px 16px;border-radius:12px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);color:#4ade80;font-size:.85rem;margin-top:14px;text-align:center}
   .error-box{padding:12px 16px;border-radius:12px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);color:#f87171;font-size:.85rem;margin-top:14px;text-align:center}
 `;
 
 export default function Transfer() {
+
   const navigate = useNavigate();
-  const [form, setForm]       = useState({ receiverId: '', amount: '', description: '' });
+
+  const { user } = useAuthStore() as any;
+
+  const [form, setForm] = useState({
+    receiverUserId: '',
+    amount: '',
+    description: '',
+  });
+
   const [loading, setLoading] = useState(false);
+
   const [success, setSuccess] = useState('');
-  const [error, setError]     = useState('');
+
+  const [error, setError] = useState('');
 
   useEffect(() => {
+
     const s = document.createElement('style');
+
     s.textContent = CSS;
+
     document.head.appendChild(s);
-    return () => { document.head.removeChild(s); };
+
+    return () => {
+      document.head.removeChild(s);
+    };
+
   }, []);
 
-  const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setError(''); setSuccess('');
-    setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  const onChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement
+    >
+  ) => {
+
+    setError('');
+    setSuccess('');
+
+    setForm((p) => ({
+      ...p,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (
+    e: React.FormEvent
+  ) => {
+
     e.preventDefault();
-    setError(''); setSuccess('');
+
+    setError('');
+    setSuccess('');
+
     const amt = parseFloat(form.amount);
-    if (!form.receiverId.trim()) { setError('Receiver ID is required'); return; }
-    if (!amt || amt <= 0)         { setError('Enter a valid amount');    return; }
+
+    if (!form.receiverUserId.trim()) {
+      setError('Receiver ID is required');
+      return;
+    }
+
+    if (!amt || amt <= 0) {
+      setError('Enter a valid amount');
+      return;
+    }
+
+    if (!user?.id) {
+      setError('User not logged in');
+      return;
+    }
+
     setLoading(true);
+
     try {
-      await transfer({ receiverId: form.receiverId, amount: amt, description: form.description });
-      setSuccess(`₹${amt.toLocaleString('en-IN')} transferred successfully!`);
-      setForm({ receiverId: '', amount: '', description: '' });
-      setTimeout(() => navigate('/dashboard'), 2000);
+
+      const payload = {
+        senderUserId: Number(user.id),
+        receiverUserId: Number(form.receiverUserId),
+        amount: amt,
+        description: form.description,
+      };
+
+      console.log(payload);
+
+      await transfer(payload);
+
+      setSuccess(
+        `₹${amt.toLocaleString('en-IN')} transferred successfully!`
+      );
+
+      setForm({
+        receiverUserId: '',
+        amount: '',
+        description: '',
+      });
+
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+
     } catch (err: any) {
-      setError(err.response?.data ?? 'Transfer failed');
-    } finally { setLoading(false); }
+
+      console.log(err);
+
+      setError(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        'Transfer failed'
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
   };
 
   return (
     <div className="page-wrap">
+
       <div className="topbar">
-        <button className="back-btn" onClick={() => navigate('/dashboard')}>←</button>
-        <span className="page-title">Transfer</span>
+
+        <button
+          className="back-btn"
+          onClick={() => navigate('/dashboard')}
+        >
+          ←
+        </button>
+
+        <span className="page-title">
+          Transfer
+        </span>
+
       </div>
+
       <div className="center">
+
         <div className="card">
-          <div className="card-icon">↗️</div>
+
+          <div className="card-icon">
+            ↗️
+          </div>
+
           <h2>Transfer Money</h2>
-          <p>Send money to another eWallet user</p>
+
+          <p>
+            Send money to another eWallet user
+          </p>
+
           <form onSubmit={handleSubmit}>
+
             <div className="field">
+
               <label>Receiver ID</label>
-              <input name="receiverId" placeholder="Enter receiver's user ID"
-                value={form.receiverId} onChange={onChange} required />
+
+              <input
+                name="receiverUserId"
+                placeholder="Enter receiver's user ID"
+                value={form.receiverUserId}
+                onChange={onChange}
+                required
+              />
+
             </div>
+
             <div className="field">
+
               <label>Amount (₹)</label>
-              <input name="amount" type="number" placeholder="Enter amount" min="1"
-                value={form.amount} onChange={onChange} required />
+
+              <input
+                name="amount"
+                type="number"
+                placeholder="Enter amount"
+                min="1"
+                value={form.amount}
+                onChange={onChange}
+                required
+              />
+
             </div>
+
             <div className="field">
+
               <label>Description (optional)</label>
-              <textarea name="description" placeholder="What's this for?" rows={3}
-                value={form.description} onChange={onChange} />
+
+              <textarea
+                name="description"
+                placeholder="What's this for?"
+                rows={3}
+                value={form.description}
+                onChange={onChange}
+              />
+
             </div>
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? 'Transferring…' : 'Transfer →'}
+
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={loading}
+            >
+              {loading
+                ? 'Transferring…'
+                : 'Transfer →'}
             </button>
-            {success && <div className="success-box">✓ {success}</div>}
-            {error   && <div className="error-box">{error}</div>}
+
+            {success && (
+              <div className="success-box">
+                ✓ {success}
+              </div>
+            )}
+
+            {error && (
+              <div className="error-box">
+                {error}
+              </div>
+            )}
+
           </form>
         </div>
       </div>

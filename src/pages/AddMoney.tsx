@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { credit } from '../api/walletApi';
+import { useAuthStore } from '../store/authStore';
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -35,70 +36,158 @@ const QUICK = [500, 1000, 2000, 5000];
 
 export default function AddMoney() {
   const navigate = useNavigate();
-  const [amount, setAmount]   = useState('');
+
+  const { user } = useAuthStore() as any;
+  const userId = user?.id;
+
+  const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
-  const [error, setError]     = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const s = document.createElement('style');
     s.textContent = CSS;
     document.head.appendChild(s);
-    return () => { document.head.removeChild(s); };
+
+    return () => {
+      document.head.removeChild(s);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); setSuccess('');
-    const amt = parseFloat(amount);
-    if (!amt || amt <= 0) { setError('Enter a valid amount'); return; }
+
+    setError('');
+    setSuccess('');
+
+    const amt = Number(amount);
+
+    if (!amt || amt <= 0) {
+      setError('Enter a valid amount');
+      return;
+    }
+
+    if (!userId) {
+      setError('User not found');
+      return;
+    }
+
     setLoading(true);
+
     try {
-      await credit(amt);
-      setSuccess(`₹${amt.toLocaleString('en-IN')} added successfully!`);
+
+      console.log('USER ID:', userId);
+      console.log('AMOUNT:', amt);
+
+      await credit(userId, amt);
+
+      setSuccess(
+        `₹${amt.toLocaleString('en-IN')} added successfully!`
+      );
+
       setAmount('');
-      setTimeout(() => navigate('/dashboard'), 2000);
+
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+
     } catch (err: any) {
-      setError(err.response?.data ?? 'Failed to add money');
-    } finally { setLoading(false); }
+
+      console.log(err);
+
+      setError(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        'Failed to add money'
+      );
+
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="page-wrap">
       <div className="topbar">
-        <button className="back-btn" onClick={() => navigate('/dashboard')}>←</button>
-        <span className="page-title">Add Money</span>
+        <button
+          className="back-btn"
+          onClick={() => navigate('/dashboard')}
+        >
+          ←
+        </button>
+
+        <span className="page-title">
+          Add Money
+        </span>
       </div>
+
       <div className="center">
         <div className="card">
+
           <div className="card-icon">💰</div>
+
           <h2>Add Money</h2>
-          <p>Top up your eWallet balance instantly</p>
+
+          <p>
+            Top up your eWallet balance instantly
+          </p>
 
           <form onSubmit={handleSubmit}>
+
             <div className="field">
+
               <label>Amount (₹)</label>
+
               <input
-                type="number" placeholder="Enter amount" min="1"
-                value={amount} onChange={e => { setAmount(e.target.value); setError(''); setSuccess(''); }}
+                type="number"
+                placeholder="Enter amount"
+                min="1"
+                value={amount}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  setError('');
+                  setSuccess('');
+                }}
               />
+
             </div>
 
             <div className="quick-amounts">
-              {QUICK.map(q => (
-                <button key={q} type="button" className="quick-btn"
-                  onClick={() => setAmount(String(q))}>
+
+              {QUICK.map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  className="quick-btn"
+                  onClick={() => setAmount(String(q))}
+                >
                   ₹{q.toLocaleString('en-IN')}
                 </button>
               ))}
+
             </div>
 
-            <button type="submit" className="submit-btn" disabled={loading}>
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={loading}
+            >
               {loading ? 'Processing…' : 'Add Money →'}
             </button>
 
-            {success && <div className="success-box">✓ {success}</div>}
-            {error   && <div className="error-box">{error}</div>}
+            {success && (
+              <div className="success-box">
+                ✓ {success}
+              </div>
+            )}
+
+            {error && (
+              <div className="error-box">
+                {error}
+              </div>
+            )}
+
           </form>
         </div>
       </div>

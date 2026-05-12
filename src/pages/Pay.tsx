@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { debit } from '../api/walletApi';
+import { useAuthStore } from '../store/authStore';
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -29,60 +30,154 @@ const CSS = `
 `;
 
 export default function Pay() {
+
   const navigate = useNavigate();
-  const [amount, setAmount]   = useState('');
+
+  const { user } = useAuthStore() as any;
+  const userId = user?.id;
+
+  const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
-  const [error, setError]     = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const s = document.createElement('style');
     s.textContent = CSS;
     document.head.appendChild(s);
-    return () => { document.head.removeChild(s); };
+
+    return () => {
+      document.head.removeChild(s);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
-    setError(''); setSuccess('');
-    const amt = parseFloat(amount);
-    if (!amt || amt <= 0) { setError('Enter a valid amount'); return; }
+
+    setError('');
+    setSuccess('');
+
+    const amt = Number(amount);
+
+    if (!amt || amt <= 0) {
+      setError('Enter a valid amount');
+      return;
+    }
+
+    if (!userId) {
+      setError('User not found');
+      return;
+    }
+
     setLoading(true);
+
     try {
-      await debit(amt);
-      setSuccess(`₹${amt.toLocaleString('en-IN')} debited successfully!`);
+
+      console.log('USER ID:', userId);
+      console.log('AMOUNT:', amt);
+
+      await debit(userId, amt);
+
+      setSuccess(
+        `₹${amt.toLocaleString('en-IN')} debited successfully!`
+      );
+
       setAmount('');
-      setTimeout(() => navigate('/dashboard'), 2000);
+
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+
     } catch (err: any) {
-      setError(err.response?.data ?? 'Payment failed');
-    } finally { setLoading(false); }
+
+      console.log(err);
+
+      setError(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        'Payment failed'
+      );
+
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="page-wrap">
+
       <div className="topbar">
-        <button className="back-btn" onClick={() => navigate('/dashboard')}>←</button>
-        <span className="page-title">Pay</span>
+
+        <button
+          className="back-btn"
+          onClick={() => navigate('/dashboard')}
+        >
+          ←
+        </button>
+
+        <span className="page-title">
+          Pay
+        </span>
+
       </div>
+
       <div className="center">
+
         <div className="card">
-          <div className="card-icon">⚡</div>
+
+          <div className="card-icon">
+            ⚡
+          </div>
+
           <h2>Make a Payment</h2>
-          <p>Debit an amount from your wallet balance</p>
+
+          <p>
+            Debit an amount from your wallet balance
+          </p>
+
           <form onSubmit={handleSubmit}>
+
             <div className="field">
+
               <label>Amount (₹)</label>
+
               <input
-                type="number" placeholder="Enter amount" min="1"
-                value={amount} onChange={e => { setAmount(e.target.value); setError(''); setSuccess(''); }}
+                type="number"
+                placeholder="Enter amount"
+                min="1"
+                value={amount}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  setError('');
+                  setSuccess('');
+                }}
               />
+
             </div>
-            <button type="submit" className="submit-btn" disabled={loading}>
+
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={loading}
+            >
               {loading ? 'Processing…' : 'Pay Now →'}
             </button>
-            {success && <div className="success-box">✓ {success}</div>}
-            {error   && <div className="error-box">{error}</div>}
+
+            {success && (
+              <div className="success-box">
+                ✓ {success}
+              </div>
+            )}
+
+            {error && (
+              <div className="error-box">
+                {error}
+              </div>
+            )}
+
           </form>
+
         </div>
       </div>
     </div>

@@ -1,14 +1,102 @@
-// src/api/walletApi.ts
 import axiosClient from './axiosClient';
 
-export const credit  = (amount: number) =>
-  axiosClient.post(`/wallet/credit?amount=${amount}`);
+// ── Types ──────────────────────────────────────────────────────────────────
 
-export const debit   = (amount: number) =>
-  axiosClient.post(`/wallet/debit?amount=${amount}`);
+export interface Wallet {
+id: number;
+userId: number;
+email: string;
+balance: number;
+pin?: string;
+}
 
-export const getBalance = (userId: string) =>
-  axiosClient.get(`/wallet/${userId}/balance`);
+export interface WalletTransactionDTO {
+id: string;
+type: 'CREDIT' | 'DEBIT' | 'TRANSFER';
+amount: number;
+description?: string;
+date: string;
+status: 'SUCCESS' | 'FAILED' | 'PENDING';
+}
 
-export const getHistory = (userId: string, page = 0, size = 10) =>
-  axiosClient.get(`/wallet/${userId}/history?page=${page}&size=${size}`);
+export interface SetPinRequest {
+userId: number;
+pin: string;
+}
+
+// ── Endpoints ──────────────────────────────────────────────────────────────
+
+// GET /wallet/{userId}/history
+export const getHistory = async (userId: number) => {
+const response = await axiosClient.get<WalletTransactionDTO[]>(
+`/wallet/${userId}/history`
+);
+
+return response.data;
+};
+
+// GET /wallet/{userId}
+export const getWallet = async (userId: number) => {
+const response = await axiosClient.get<Wallet>(
+`/wallet/${userId}`
+);
+
+return response.data;
+};
+
+// GET /wallet/{userId}/balance
+export const getBalance = async (userId: number) => {
+const response = await axiosClient.get<number>(
+`/wallet/${userId}/balance`
+);
+
+return response.data;
+};
+
+// POST /wallet/{userId}/credit?amount=
+export const credit = async (
+userId: number,
+amount: number
+) => {
+const response = await axiosClient.post(
+`/wallet/${userId}/credit`,
+null,
+{
+params: {
+amount,
+},
+}
+);
+
+return response.data;
+};
+
+// POST /wallet/{userId}/debit?amount=
+export const debit = async (
+userId: number,
+amount: number
+) => {
+const response = await axiosClient.post(
+`/wallet/${userId}/debit`,
+null,
+{
+params: {
+amount,
+},
+}
+);
+
+return response.data;
+};
+
+// POST /wallet/set-pin
+export const setPin = async (
+data: SetPinRequest
+) => {
+const response = await axiosClient.post(
+`/wallet/set-pin`,
+data
+);
+
+return response.data;
+};
