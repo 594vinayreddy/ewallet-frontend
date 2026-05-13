@@ -1,7 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
+
 import { register } from '../api/authApi';
+import { getProfile } from '../api/userApi';
+
 import { useAuthStore } from '../store/authStore';
+
+interface JwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+  exp: number;
+}
 
 const CSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,7 +30,12 @@ const CSS = `
 body {
   min-height: 100vh;
   font-family: 'DM Sans', sans-serif;
-  background: linear-gradient(135deg, var(--c5) 0%, var(--c3) 40%, var(--c1) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--c5) 0%,
+    var(--c3) 40%,
+    var(--c1) 100%
+  );
 }
 
 .register-page {
@@ -136,11 +152,21 @@ body {
   padding:14px;
   border:none;
   border-radius:14px;
-  background: linear-gradient(135deg,var(--c1),var(--c4),var(--c2));
+  background: linear-gradient(
+    135deg,
+    var(--c1),
+    var(--c4),
+    var(--c2)
+  );
   color:white;
   font-size:1rem;
   cursor:pointer;
   margin-top:10px;
+  transition:0.2s;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
 }
 
 .submit-btn:disabled {
@@ -174,11 +200,17 @@ body {
 `;
 
 export default function Register() {
-  const navigate = useNavigate();
-  const { setToken } = useAuthStore();
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const { setToken, setUser } =
+    useAuthStore();
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState('');
 
   const [form, setForm] = useState({
     firstName: '',
@@ -190,64 +222,165 @@ export default function Register() {
   });
 
   useEffect(() => {
-    const style = document.createElement('style');
+
+    const style =
+      document.createElement('style');
+
     style.textContent = CSS;
+
     document.head.appendChild(style);
 
-    return () => document.head.removeChild(style);
+    return () =>
+      document.head.removeChild(style);
+
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+
     setForm({
       ...form,
       [e.target.name]: e.target.value,
     });
+
+    setError('');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (
+    e: React.FormEvent
+  ) => {
+
     e.preventDefault();
 
     setError('');
+
     setLoading(true);
 
     try {
+
+      // REGISTER USER
       const res = await register(form);
 
-      setToken(res.data.token);
+      const { token } = res.data;
 
+      // SAVE TOKEN
+      setToken(token);
+
+      // DECODE JWT
+      const payload =
+        jwtDecode<JwtPayload>(token);
+
+      const userId =
+        Number(payload.sub);
+
+      if (isNaN(userId)) {
+
+        throw new Error(
+          'Invalid user ID in token'
+        );
+      }
+
+      // FETCH FULL PROFILE
+      const profileRes =
+        await getProfile(token, userId);
+
+      const profile =
+        profileRes.data;
+
+      // SAVE USER
+      setUser({
+        id: profile.id,
+
+        firstName:
+          profile.firstName ?? '',
+
+        lastName:
+          profile.lastName ?? '',
+
+        email:
+          profile.email ?? '',
+
+        role:
+          payload.role ?? 'USER',
+
+        phoneNumber:
+          profile.phoneNumber ?? '',
+
+        dateOfBirth:
+          profile.dateOfBirth ?? '',
+      });
+
+      // REDIRECT
       navigate('/dashboard');
+
     } catch (err: any) {
+
       console.error(err);
 
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
+      if (
+        err.response?.data?.message
+      ) {
+
+        setError(
+          err.response.data.message
+        );
+
       } else {
-        setError('Registration failed');
+
+        setError(
+          err.message ||
+          'Registration failed'
+        );
       }
+
     } finally {
+
       setLoading(false);
     }
   };
 
   return (
     <div className="register-page">
+
       <div className="orb orb-1"></div>
+
       <div className="orb orb-2"></div>
+
       <div className="orb orb-3"></div>
 
       <div className="card-wrap">
+
         <div className="brand">
-          <h1>Rupee<span>Pay</span></h1>
-          <p>Open your account</p>
+
+          <h1>
+            Rupee<span>Pay</span>
+          </h1>
+
+          <p>
+            Open your account
+          </p>
+
         </div>
 
         <div className="glass">
-          {error && <div className="error">{error}</div>}
+
+          {error && (
+            <div className="error">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
+
             <div className="row">
+
               <div className="field">
-                <label>First Name</label>
+
+                <label>
+                  First Name
+                </label>
+
                 <input
                   name="firstName"
                   placeholder="Ravi"
@@ -255,10 +388,15 @@ export default function Register() {
                   onChange={handleChange}
                   required
                 />
+
               </div>
 
               <div className="field">
-                <label>Last Name</label>
+
+                <label>
+                  Last Name
+                </label>
+
                 <input
                   name="lastName"
                   placeholder="Sharma"
@@ -266,11 +404,15 @@ export default function Register() {
                   onChange={handleChange}
                   required
                 />
+
               </div>
+
             </div>
 
             <div className="field">
+
               <label>Email</label>
+
               <input
                 name="email"
                 type="email"
@@ -279,10 +421,13 @@ export default function Register() {
                 onChange={handleChange}
                 required
               />
+
             </div>
 
             <div className="field">
+
               <label>Password</label>
+
               <input
                 name="password"
                 type="password"
@@ -292,11 +437,17 @@ export default function Register() {
                 onChange={handleChange}
                 required
               />
+
             </div>
 
             <div className="row">
+
               <div className="field">
-                <label>Phone Number</label>
+
+                <label>
+                  Phone Number
+                </label>
+
                 <input
                   name="phoneNumber"
                   placeholder="9876543210"
@@ -304,10 +455,15 @@ export default function Register() {
                   onChange={handleChange}
                   required
                 />
+
               </div>
 
               <div className="field">
-                <label>Date of Birth</label>
+
+                <label>
+                  Date of Birth
+                </label>
+
                 <input
                   name="dateOfBirth"
                   type="date"
@@ -315,7 +471,9 @@ export default function Register() {
                   onChange={handleChange}
                   required
                 />
+
               </div>
+
             </div>
 
             <button
@@ -323,15 +481,26 @@ export default function Register() {
               className="submit-btn"
               disabled={loading}
             >
-              {loading ? 'Creating...' : 'Create Account →'}
+              {loading
+                ? 'Creating...'
+                : 'Create Account →'}
             </button>
+
           </form>
 
           <p className="footer-text">
-            Already have an account? <Link to="/">Sign in</Link>
+            Already have an account?{' '}
+
+            <Link to="/">
+              Sign in
+            </Link>
+
           </p>
+
         </div>
+
       </div>
+
     </div>
   );
 }
