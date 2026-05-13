@@ -43,15 +43,15 @@ console.error('Transfer API Error:', error);
   }
 };
 
-// GET /transactions/history/{userId}
+// GET /transactions/history/{email}
 export const getTransactionHistory = async (
-  userId: number
+  email: string
 ) => {
 
   try {
 
     const response = await axiosClient.get<Transaction[]>(
-      `/transactions/history/${userId}`
+      `/transactions/history/${email}`
     );
 
     return response.data;

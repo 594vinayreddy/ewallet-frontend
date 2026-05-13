@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import { getHistory } from '../api/walletApi';
-import { useAuthStore } from '../store/authStore'
+
+import {
+  getTransactionHistory,
+} from '../api/transactionApi';
+
+import { useAuthStore } from '../store/authStore';
+
 import TransactionCard from '../components/TransactionCard';
-import type { WalletTransactionDTO,} from '../api/walletApi';
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -63,12 +69,7 @@ const CSS = `
     cursor:pointer;
     display:flex;
     align-items:center;
-    justify-content:center;
-    transition:background .2s
-  }
-
-  .back-btn:hover{
-    background:rgba(255,255,255,0.12)
+    justify-content:center
   }
 
   .page-title{
@@ -91,27 +92,7 @@ const CSS = `
     margin-bottom:24px
   }
 
-  .search-input{
-    flex:1;
-    min-width:180px;
-    background:rgba(255,255,255,0.065);
-    border:1px solid rgba(255,255,255,0.085);
-    border-radius:12px;
-    padding:10px 16px;
-    color:#f5f7ff;
-    font-family:'DM Sans',sans-serif;
-    font-size:.88rem;
-    outline:none
-  }
-
-  .search-input:focus{
-    border-color:#4f7cff
-  }
-
-  .search-input::placeholder{
-    color:rgba(245,247,255,0.25)
-  }
-
+  .search-input,
   .filter-select{
     background:rgba(255,255,255,0.065);
     border:1px solid rgba(255,255,255,0.085);
@@ -120,8 +101,12 @@ const CSS = `
     color:#f5f7ff;
     font-family:'DM Sans',sans-serif;
     font-size:.85rem;
-    outline:none;
-    cursor:pointer
+    outline:none
+  }
+
+  .search-input{
+    flex:1;
+    min-width:180px
   }
 
   .filter-select option{
@@ -132,15 +117,13 @@ const CSS = `
     font-family:'Syne',sans-serif;
     font-size:1.1rem;
     font-weight:700;
-    margin-bottom:16px;
-    color:#f5f7ff
+    margin-bottom:16px
   }
 
   .empty{
     text-align:center;
     padding:48px 0;
-    color:rgba(245,247,255,0.3);
-    font-size:.9rem
+    color:rgba(245,247,255,0.3)
   }
 
   .error-box{
@@ -149,33 +132,7 @@ const CSS = `
     background:rgba(248,113,113,0.1);
     border:1px solid rgba(248,113,113,0.25);
     color:#f87171;
-    font-size:.85rem;
-    text-align:center;
     margin-bottom:16px
-  }
-
-  .skeleton-row{
-    height:64px;
-    border-radius:14px;
-    background:
-      linear-gradient(
-        90deg,
-        rgba(255,255,255,0.04) 25%,
-        rgba(255,255,255,0.08) 50%,
-        rgba(255,255,255,0.04) 75%
-      );
-    background-size:400px 100%;
-    animation:shimmer 1.4s infinite;
-    margin-bottom:10px
-  }
-
-  @keyframes shimmer{
-    0%{
-      background-position:-400px 0
-    }
-    100%{
-      background-position:400px 0
-    }
   }
 `;
 
@@ -185,22 +142,27 @@ export default function History() {
 
   const { user } = useAuthStore() as any;
 
-  const [txs, setTxs] = useState<
-    WalletTransactionDTO[]
-  >([]);
+  const [txs, setTxs] = useState<any[]>([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [error, setError] = useState('');
+  const [error, setError] =
+    useState('');
 
-  const [search, setSearch] = useState('');
+  const [search, setSearch] =
+    useState('');
 
   const [typeFilter, setType] =
     useState('ALL');
 
+  const [statusFilter, setStatus] =
+    useState('ALL');
+
   useEffect(() => {
 
-    const s = document.createElement('style');
+    const s =
+      document.createElement('style');
 
     s.textContent = CSS;
 
@@ -214,7 +176,7 @@ export default function History() {
 
   useEffect(() => {
 
-    if (user?.id) {
+    if (user?.id && user?.email) {
       fetchHistory();
     }
 
@@ -222,26 +184,73 @@ export default function History() {
 
   const fetchHistory = async () => {
 
-    if (!user?.id) {
-
-      setError('User not found');
-
-      setLoading(false);
-
-      return;
-    }
-
-    setLoading(true);
-
-    setError('');
-
     try {
 
-      const data = await getHistory(user.id);
+      setLoading(true);
 
-      console.log(data);
+      const [
+        walletHistory,
+        transferHistory,
+      ] = await Promise.all([
 
-      setTxs(data);
+        getHistory(user.id),
+
+        getTransactionHistory(
+          user.email
+        ),
+
+      ]);
+
+      // normalize wallet tx
+      const walletTxs =
+        walletHistory.map((tx: any) => ({
+
+          id: `wallet-${tx.id}`,
+
+          type: tx.type,
+
+          amount: tx.amount,
+
+          date: tx.createdAt,
+
+          description:
+            'Wallet transaction',
+
+          status: 'SUCCESS',
+        }));
+
+      // normalize transfer tx
+      const transferTxs =
+        transferHistory.map((tx: any) => ({
+
+          id: `transfer-${tx.id}`,
+
+          type: 'TRANSFER',
+
+          amount: tx.amount,
+
+          date: tx.createdAt,
+
+          description:
+            tx.description ||
+            'Transfer',
+
+          status:
+            tx.status ||
+            'SUCCESS',
+        }));
+
+      // merge + sort latest first
+      const merged = [
+        ...walletTxs,
+        ...transferTxs,
+      ].sort(
+        (a, b) =>
+          new Date(b.date).getTime() -
+          new Date(a.date).getTime()
+      );
+
+      setTxs(merged);
 
     } catch (err: any) {
 
@@ -269,10 +278,20 @@ export default function History() {
 
     .filter(
       (tx) =>
+        statusFilter === 'ALL' ||
+        tx.status === statusFilter
+    )
+
+    .filter(
+      (tx) =>
         !search ||
-        tx.type
+        (
+          tx.description || ''
+        )
           .toLowerCase()
-          .includes(search.toLowerCase())
+          .includes(
+            search.toLowerCase()
+          )
     );
 
   return (
@@ -297,13 +316,11 @@ export default function History() {
 
       <div className="content">
 
-        {/* Filters */}
-
         <div className="filters">
 
           <input
             className="search-input"
-            placeholder="Search transaction type…"
+            placeholder="Search transactions..."
             value={search}
             onChange={(e) =>
               setSearch(e.target.value)
@@ -336,6 +353,32 @@ export default function History() {
 
           </select>
 
+          <select
+            className="filter-select"
+            value={statusFilter}
+            onChange={(e) =>
+              setStatus(e.target.value)
+            }
+          >
+
+            <option value="ALL">
+              All Status
+            </option>
+
+            <option value="SUCCESS">
+              Success
+            </option>
+
+            <option value="FAILED">
+              Failed
+            </option>
+
+            <option value="PENDING">
+              Pending
+            </option>
+
+          </select>
+
         </div>
 
         <div className="section-label">
@@ -350,12 +393,9 @@ export default function History() {
 
         {loading ? (
 
-          [1,2,3,4,5].map((i) => (
-            <div
-              key={i}
-              className="skeleton-row"
-            />
-          ))
+          <div className="empty">
+            Loading...
+          </div>
 
         ) : filtered.length === 0 ? (
 
@@ -369,15 +409,7 @@ export default function History() {
 
             <TransactionCard
               key={tx.id}
-              tx={{
-                ...tx,
-
-                // FIX DATE ISSUE
-                date: tx.createdAt,
-
-                // REMOVE STATUS
-                status: 'SUCCESS',
-              }}
+              tx={tx}
             />
 
           ))
@@ -385,6 +417,7 @@ export default function History() {
         )}
 
       </div>
+
     </div>
   );
 }

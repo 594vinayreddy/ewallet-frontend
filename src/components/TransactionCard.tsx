@@ -10,7 +10,7 @@ interface Transaction {
 export default function TransactionCard({ tx }: { tx: Transaction }) {
   const isCredit = tx.type === 'CREDIT';
   const color = isCredit ? '#4ade80' : '#f87171';
-  const icon  = tx.type === 'CREDIT' ? '↓' : tx.type === 'TRANSFER' ? '⇄' : '↑';
+  const icon  = tx.type === 'CREDIT' ? '↑' : tx.type === 'TRANSFER' ? '⇄' : '↓';
 
   return (
     <div style={{
