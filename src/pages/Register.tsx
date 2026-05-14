@@ -222,39 +222,28 @@ export default function Register() {
   });
 
   useEffect(() => {
-
     const style =
       document.createElement('style');
-
     style.textContent = CSS;
-
     document.head.appendChild(style);
-
     return () =>
       document.head.removeChild(style);
-
   }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-
     setForm({
-      ...form,
-      [e.target.name]: e.target.value,
+      ...form, [e.target.name]: e.target.value,
     });
-
     setError('');
   };
 
   const handleSubmit = async (
     e: React.FormEvent
   ) => {
-
     e.preventDefault();
-
     setError('');
-
     setLoading(true);
 
     try {
@@ -281,35 +270,22 @@ export default function Register() {
         );
       }
 
-      // FETCH FULL PROFILE
-      const profileRes =
-        await getProfile(token, userId);
+     const profileRes =
+       await getProfile(token, userId);
 
-      const profile =
-        profileRes.data;
+     const profile =
+       profileRes.data;
 
-      // SAVE USER
-      setUser({
-        id: profile.id,
-
-        firstName:
-          profile.firstName ?? '',
-
-        lastName:
-          profile.lastName ?? '',
-
-        email:
-          profile.email ?? '',
-
-        role:
-          payload.role ?? 'USER',
-
-        phoneNumber:
-          profile.phoneNumber ?? '',
-
-        dateOfBirth:
-          profile.dateOfBirth ?? '',
-      });
+     // SAVE USER
+    setUser({
+         id: profile.id,
+         firstName: profile.firstName ?? '',
+         lastName: profile.lastName ?? '',
+         email: profile.email ?? email,
+         role: role,
+         phoneNumber: profile.phoneNumber ?? '',
+         dateOfBirth: profile.dateOfBirth ?? '',
+       });
 
       // REDIRECT
       navigate('/dashboard');

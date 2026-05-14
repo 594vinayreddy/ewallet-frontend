@@ -558,16 +558,6 @@ export default function Login() {
 
       const profile = profileRes.data;
 
-      /*
-        profile = {
-          id,
-          email,
-          firstName,
-          lastName,
-          phoneNumber,
-          dateOfBirth
-        }
-      */
 
       // SAVE USER
       setUser({
