@@ -3,16 +3,17 @@ import axiosClient from './axiosClient';
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export interface TransferRequest {
-senderUserId: number;
-receiverUserId: number;
+senderEmail: string;
+receiverEmail: string;
 amount: number;
 description: string;
+pin: string;
 }
 
 export interface Transaction {
 id: string;
-senderUserId: number;
-receiverUserId: number;
+senderEmail: string;
+receiverEmail: string;
 amount: number;
 description?: string;
 status: 'SUCCESS' | 'FAILED' | 'PENDING';
@@ -21,7 +22,6 @@ createdAt: string;
 
 // ── API Calls ──────────────────────────────────────────────────────────────
 
-// POST /transactions/transfer
 export const transfer = async (
 data: TransferRequest
 ) => {
@@ -43,7 +43,6 @@ console.error('Transfer API Error:', error);
   }
 };
 
-// GET /transactions/history/{email}
 export const getTransactionHistory = async (
   email: string
 ) => {

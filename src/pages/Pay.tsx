@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { debit } from '../api/walletApi';
+import { getWallet } from '../api/walletApi';
 import { useAuthStore } from '../store/authStore';
 
 const CSS = `
@@ -25,38 +25,30 @@ const CSS = `
   .submit-btn{width:100%;padding:14px;border:none;border-radius:13px;background:linear-gradient(135deg,#d97706,#fbbf24);color:#fff;font-family:'Syne',sans-serif;font-size:.94rem;font-weight:700;letter-spacing:.05em;cursor:pointer;box-shadow:0 6px 30px rgba(251,191,36,0.3);transition:transform .18s,box-shadow .18s}
   .submit-btn:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(251,191,36,0.4)}
   .submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
-  .success-box{padding:12px 16px;border-radius:12px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);color:#4ade80;font-size:.85rem;margin-top:14px;text-align:center}
   .error-box{padding:12px 16px;border-radius:12px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);color:#f87171;font-size:.85rem;margin-top:14px;text-align:center}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px}
 `;
 
 export default function Pay() {
-
   const navigate = useNavigate();
-
   const { user } = useAuthStore() as any;
   const userId = user?.id;
 
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
     const s = document.createElement('style');
     s.textContent = CSS;
     document.head.appendChild(s);
-
-    return () => {
-      document.head.removeChild(s);
-    };
+    return () => { document.head.removeChild(s); };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-
     e.preventDefault();
-
     setError('');
-    setSuccess('');
 
     const amt = Number(amount);
 
@@ -66,39 +58,36 @@ export default function Pay() {
     }
 
     if (!userId) {
-      setError('User not found');
+      setError('User not found. Please log in again.');
       return;
     }
 
     setLoading(true);
 
     try {
+      // Fetch wallet to check if PIN is set
+      const wallet = await getWallet(userId);
 
-      console.log('USER ID:', userId);
-      console.log('AMOUNT:', amt);
+      if (!wallet.pin) {
+        // PIN not set → go to set-pin page
+        navigate('/set-pin');
+        return;
+      }
 
-      await debit(userId, amt);
-
-      setSuccess(
-        `₹${amt.toLocaleString('en-IN')} debited successfully!`
-      );
-
-      setAmount('');
-
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
-
+      // PIN exists → go to verify-pin with action payload
+      navigate('/verify-pin', {
+        state: {
+          action: 'pay',
+          userId,
+          amount: amt,
+        },
+      });
     } catch (err: any) {
-
-      console.log(err);
-
       setError(
         err.response?.data?.message ||
         err.response?.data?.error ||
-        'Payment failed'
+        'Failed to load wallet. Try again.'
       );
-
     } finally {
       setLoading(false);
     }
@@ -106,42 +95,20 @@ export default function Pay() {
 
   return (
     <div className="page-wrap">
-
       <div className="topbar">
-
-        <button
-          className="back-btn"
-          onClick={() => navigate('/dashboard')}
-        >
-          ←
-        </button>
-
-        <span className="page-title">
-          Pay
-        </span>
-
+        <button className="back-btn" onClick={() => navigate('/dashboard')}>←</button>
+        <span className="page-title">Pay</span>
       </div>
 
       <div className="center">
-
         <div className="card">
-
-          <div className="card-icon">
-            ⚡
-          </div>
-
+          <div className="card-icon">⚡</div>
           <h2>Make a Payment</h2>
-
-          <p>
-            Debit an amount from your wallet balance
-          </p>
+          <p>Debit an amount from your wallet balance</p>
 
           <form onSubmit={handleSubmit}>
-
             <div className="field">
-
               <label>Amount (₹)</label>
-
               <input
                 type="number"
                 placeholder="Enter amount"
@@ -150,34 +117,20 @@ export default function Pay() {
                 onChange={(e) => {
                   setAmount(e.target.value);
                   setError('');
-                  setSuccess('');
                 }}
               />
-
             </div>
 
-            <button
-              type="submit"
-              className="submit-btn"
-              disabled={loading}
-            >
-              {loading ? 'Processing…' : 'Pay Now →'}
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? (
+                <><span className="spinner" />Checking wallet…</>
+              ) : (
+                'Pay Now →'
+              )}
             </button>
 
-            {success && (
-              <div className="success-box">
-                ✓ {success}
-              </div>
-            )}
-
-            {error && (
-              <div className="error-box">
-                {error}
-              </div>
-            )}
-
+            {error && <div className="error-box">{error}</div>}
           </form>
-
         </div>
       </div>
     </div>

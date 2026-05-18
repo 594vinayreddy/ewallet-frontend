@@ -10,6 +10,10 @@ import Transfer     from './pages/Transfer';
 import Balance      from './pages/Balance';
 import History      from './pages/History';
 import WalletPage   from './pages/Wallet';
+import SetPin        from './pages/SetPin';
+import ChangePin     from './pages/ChangePin';
+import VerifyPin      from './pages/VerifyPin';
+import Success        from './pages/Success';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { token } = useAuthStore();
@@ -32,6 +36,10 @@ export default function App() {
         <Route path="/balance"    element={<ProtectedRoute><Balance /></ProtectedRoute>} />
         <Route path="/history"    element={<ProtectedRoute><History /></ProtectedRoute>} />
         <Route path="/wallet"     element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
+        <Route path="/set-pin"    element={<ProtectedRoute><SetPin /></ProtectedRoute>} />
+        <Route path="/change-pin" element={<ProtectedRoute><ChangePin /></ProtectedRoute>} />
+        <Route path="/verify-pin" element={<ProtectedRoute><VerifyPin /></ProtectedRoute>} />
+        <Route path="/success"    element={<ProtectedRoute><Success /></ProtectedRoute>} />
 
         {/* Fallback — unknown routes go to dashboard if logged in */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
