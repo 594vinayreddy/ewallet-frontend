@@ -54,7 +54,12 @@ const CSS = `
     cursor:pointer;
     display:flex;
     align-items:center;
-    justify-content:center
+    justify-content:center;
+    transition:background .2s
+  }
+
+  .back-btn:hover{
+    background:rgba(255,255,255,0.12)
   }
 
   .page-title{
@@ -138,6 +143,8 @@ const CSS = `
     pointer-events:none
   }
 
+  /* ── PIN dots ── */
+
   .pin-row{
     display:flex;
     gap:12px;
@@ -157,15 +164,32 @@ const CSS = `
     font-family:'Syne',sans-serif;
     font-weight:700;
     color:#4ade80;
+    transition:border-color .2s,background .2s,box-shadow .2s
   }
 
   .pin-box.active{
-    border-color:#4ade80
+    border-color:#4ade80;
+    background:rgba(74,222,128,0.07);
+    box-shadow:0 0 0 3px rgba(74,222,128,0.14)
   }
 
   .pin-box.filled{
     border-color:rgba(74,222,128,0.4)
   }
+
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-5px)}
+    80%{transform:translateX(5px)}
+  }
+
+  .shake{
+    animation:shake .35s ease
+  }
+
+  /* ── Numpad ── */
 
   .numpad{
     display:grid;
@@ -184,13 +208,55 @@ const CSS = `
     font-size:1.1rem;
     font-weight:700;
     cursor:pointer;
+    transition:background .15s,transform .1s,border-color .15s
   }
 
-  .num-btn.empty{
-    background:transparent;
-    border-color:transparent;
-    cursor:default
+  .num-btn:hover:not(:disabled){
+    background:rgba(255,255,255,0.11);
+    transform:scale(1.04)
   }
+
+  .num-btn:active:not(:disabled){
+    transform:scale(0.97)
+  }
+
+  /* ✕ clear — left of 0 */
+  .num-btn.clear-btn{
+    color:#f87171;
+    border-color:rgba(248,113,113,0.2);
+    font-size:.95rem
+  }
+
+  .num-btn.clear-btn:hover:not(:disabled){
+    background:rgba(248,113,113,0.1);
+    border-color:rgba(248,113,113,0.35)
+  }
+
+  .num-btn.clear-btn:disabled{
+    opacity:.25;
+    cursor:not-allowed;
+    transform:none
+  }
+
+  /* ✓ confirm — right of 0 */
+  .num-btn.confirm-btn{
+    color:#4ade80;
+    border-color:rgba(74,222,128,0.2);
+    font-size:1.25rem
+  }
+
+  .num-btn.confirm-btn:hover:not(:disabled){
+    background:rgba(74,222,128,0.1);
+    border-color:rgba(74,222,128,0.35)
+  }
+
+  .num-btn.confirm-btn:disabled{
+    opacity:.25;
+    cursor:not-allowed;
+    transform:none
+  }
+
+  /* ── Feedback ── */
 
   .loading-box{
     margin-top:20px;
@@ -211,9 +277,7 @@ const CSS = `
   }
 
   @keyframes spin{
-    to{
-      transform:rotate(360deg)
-    }
+    to{ transform:rotate(360deg) }
   }
 
   .spinner{
@@ -231,45 +295,49 @@ const CSS = `
 
 const PIN_LENGTH = 4;
 
+// ── PinInput ───────────────────────────────────────────────────────────────
+
 function PinInput({
   value,
   onChange,
+  shake,
   disabled,
+  onConfirm,
 }: {
   value: string;
   onChange: (v: string) => void;
+  shake: boolean;
   disabled?: boolean;
+  onConfirm: () => void;
 }) {
-
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-
     if (disabled) return;
-
     if (e.key === 'Backspace') {
       onChange(value.slice(0, -1));
     } else if (/^\d$/.test(e.key) && value.length < PIN_LENGTH) {
       onChange(value + e.key);
     }
-
     e.preventDefault();
   };
 
-  const handleNumpad = (digit: string) => {
-
+  const handleNumpad = (key: string) => {
     if (disabled) return;
-
-    if (digit === 'del') {
+    if (key === 'clear') {
+      onChange(value.slice(0, -1));
+    } else if (key === 'del') {
       onChange(value.slice(0, -1));
     } else if (value.length < PIN_LENGTH) {
-      onChange(value + digit);
+      onChange(value + key);
     }
   };
 
+  // 'clear' = ✕ left of 0, 'confirm' = ✓ right of 0
+  const keys = ['1','2','3','4','5','6','7','8','9','clear','0','confirm'];
+
   return (
     <div>
-
       <input
         ref={inputRef}
         className="hidden-input"
@@ -279,56 +347,86 @@ function PinInput({
         onChange={() => {}}
         onKeyDown={handleKey}
         autoFocus
+        autoComplete="off"
       />
 
+      {/* PIN dot boxes */}
       <div
-        className="pin-row"
-        onClick={() => inputRef.current?.focus()}
+        className={`pin-row${shake ? ' shake' : ''}`}
+        onClick={() => !disabled && inputRef.current?.focus()}
+        style={{ cursor: disabled ? 'default' : 'pointer' }}
       >
-
         {Array.from({ length: PIN_LENGTH }).map((_, i) => {
-
           const filled = i < value.length;
-          const active = i === value.length;
-
+          const active = !disabled && i === value.length;
           return (
             <div
               key={i}
-              className={`pin-box ${filled ? 'filled' : ''} ${active ? 'active' : ''}`}
+              className={`pin-box${filled ? ' filled' : ''}${active ? ' active' : ''}`}
             >
               {filled ? '•' : ''}
             </div>
           );
         })}
-
       </div>
 
+      {/* Numpad */}
       <div className="numpad">
+        {keys.map((k, idx) => {
 
-        {['1','2','3','4','5','6','7','8','9','','0','del'].map((k, idx) => (
+          if (k === 'clear') {
+            return (
+              <button
+                key={idx}
+                type="button"
+                className="num-btn clear-btn"
+                onClick={() => handleNumpad('clear')}
+                disabled={disabled || value.length === 0}
+                title="Clear"
+              >
+                ✕
+              </button>
+            );
+          }
 
-          <button
-            key={idx}
-            type="button"
-            className={`num-btn ${k === '' ? 'empty' : ''}`}
-            onClick={() => k && handleNumpad(k)}
-            disabled={disabled}
-          >
-            {k === 'del' ? '⌫' : k}
-          </button>
+          if (k === 'confirm') {
+            return (
+              <button
+                key={idx}
+                type="button"
+                className="num-btn confirm-btn"
+                onClick={onConfirm}
+                disabled={disabled || value.length < PIN_LENGTH}
+                title="Confirm"
+              >
+                ✓
+              </button>
+            );
+          }
 
-        ))}
-
+          return (
+            <button
+              key={idx}
+              type="button"
+              className="num-btn"
+              onClick={() => handleNumpad(k)}
+              disabled={disabled}
+            >
+              {k}
+            </button>
+          );
+        })}
       </div>
-
     </div>
   );
 }
 
+// ── VerifyPin page ─────────────────────────────────────────────────────────
+
 export default function VerifyPin() {
 
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate  = useNavigate();
+  const location  = useLocation();
 
   const {
     action,
@@ -340,51 +438,36 @@ export default function VerifyPin() {
     description,
   } = location.state || {};
 
-  const [pin, setPin] = useState('');
+  const [pin, setPin]         = useState('');
+  const [shake, setShake]     = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]     = useState('');
 
   useEffect(() => {
-
     const s = document.createElement('style');
     s.textContent = CSS;
-
     document.head.appendChild(s);
-
-    return () => {
-      document.head.removeChild(s);
-    };
-
+    return () => { document.head.removeChild(s); };
   }, []);
 
-  useEffect(() => {
-
-    if (pin.length === PIN_LENGTH) {
-      handleVerify();
-    }
-
-  }, [pin]);
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 400);
+  };
 
   const handleVerify = async () => {
-
     setLoading(true);
     setError('');
 
     try {
 
       if (action === 'pay') {
-
         await debit(userId, amount, pin);
-
         navigate('/success', {
-          state: {
-            action: 'pay',
-            amount,
-          },
+          state: { action: 'pay', amount },
         });
 
       } else if (action === 'transfer') {
-
         await transferMoney({
           senderEmail,
           receiverEmail,
@@ -392,64 +475,44 @@ export default function VerifyPin() {
           description,
           pin,
         });
-
         navigate('/success', {
-          state: {
-            action: 'transfer',
-            amount: transferAmount,
-            receiverEmail,
-          },
+          state: { action: 'transfer', amount: transferAmount, receiverEmail },
         });
       }
 
     } catch (err: any) {
-
       const msg =
         err.response?.data?.message ||
         err.response?.data?.error ||
-        'Transaction failed';
-
+        'Transaction failed. Please try again.';
       setError(msg);
+      triggerShake();
       setPin('');
-
     } finally {
       setLoading(false);
     }
   };
 
-  const backPath = action === 'pay'
-    ? '/pay'
-    : '/transfer';
-
-  const displayAmount = action === 'pay'
-    ? amount
-    : transferAmount;
+  const backPath      = action === 'pay' ? '/pay' : '/transfer';
+  const displayAmount = action === 'pay' ? amount : transferAmount;
 
   return (
     <div className="page-wrap">
 
       <div className="topbar">
-
         <button
           className="back-btn"
           onClick={() => navigate(backPath)}
         >
           ←
         </button>
-
-        <span className="page-title">
-          Enter PIN
-        </span>
-
+        <span className="page-title">Enter PIN</span>
       </div>
 
       <div className="center">
-
         <div className="card">
 
-          <div className="card-icon">
-            🛡️
-          </div>
+          <div className="card-icon">🛡️</div>
 
           <h2>Confirm with PIN</h2>
 
@@ -464,23 +527,20 @@ export default function VerifyPin() {
           </div>
 
           <div className="field">
-
-            <label>
-              Enter your 4-digit PIN
-            </label>
-
+            <label>Enter your 4-digit PIN</label>
             <PinInput
               value={pin}
               onChange={setPin}
+              shake={shake}
               disabled={loading}
+              onConfirm={handleVerify}
             />
-
           </div>
 
           {loading && (
             <div className="loading-box">
               <span className="spinner" />
-              Processing transaction...
+              Processing transaction…
             </div>
           )}
 
@@ -491,7 +551,6 @@ export default function VerifyPin() {
           )}
 
         </div>
-
       </div>
 
     </div>

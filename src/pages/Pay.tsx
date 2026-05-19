@@ -70,7 +70,11 @@ export default function Pay() {
 
       if (!wallet.pin) {
         // PIN not set → go to set-pin page
-        navigate('/set-pin');
+        navigate('/set-pin',{
+            state:{
+                from:'/pay',
+                },
+            });
         return;
       }
 

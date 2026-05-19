@@ -30,6 +30,11 @@ oldPin: string;
 newPin: string;
 }
 
+export interface VerifyPinRequest {
+userId: number;
+pin: string;
+}
+
 // ── Endpoints ──────────────────────────────────────────────────────────────
 
 // GET /wallet/{userId}/history
@@ -60,6 +65,15 @@ return response.data;
 export const setPin = async (data: SetPinRequest): Promise<string> => {
 const response = await axiosClient.post<string>(
 `/wallet/set-pin`,
+data
+);
+return response.data;
+};
+
+// POST /wallet/verify-pin
+export const verifyPin = async (data: VerifyPinRequest): Promise<boolean> => {
+const response = await axiosClient.post<boolean>(
+`/wallet/verify-pin`,
 data
 );
 return response.data;

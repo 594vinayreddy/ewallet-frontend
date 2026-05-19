@@ -83,7 +83,11 @@ export default function Transfer() {
 
       if (!wallet.pin) {
         // PIN not set → redirect to set-pin
-        navigate('/set-pin');
+        navigate('/set-pin',{
+            state:{
+                from:'/transfer',
+                },
+            });
         return;
       }
 

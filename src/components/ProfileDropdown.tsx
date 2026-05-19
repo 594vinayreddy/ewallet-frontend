@@ -12,7 +12,7 @@ export default function ProfileDropdown({ name = '', email = '', userId = '' }: 
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { logout } = useAuthStore();   // ← was clearToken, now logout
+  const { logout } = useAuthStore();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -25,6 +25,11 @@ export default function ProfileDropdown({ name = '', email = '', userId = '' }: 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleChangePin = () => {
+    setOpen(false);
+    navigate('/change-pin');
   };
 
   const initial = name ? name[0].toUpperCase() : '?';
@@ -77,6 +82,24 @@ export default function ProfileDropdown({ name = '', email = '', userId = '' }: 
               ID: {userId || '—'}
             </div>
           </div>
+
+          {/* Change PIN */}
+          <button
+            onClick={handleChangePin}
+            style={{
+              width: '100%', padding: '11px 18px',
+              background: 'none', border: 'none',
+              borderBottom: '1px solid rgba(255,255,255,0.07)',
+              color: '#f5f7ff', fontSize: '.85rem',
+              textAlign: 'left', cursor: 'pointer',
+              fontFamily: 'DM Sans, sans-serif',
+              transition: 'background .15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+          >
+            🔑 Change PIN
+          </button>
 
           {/* Logout */}
           <button
